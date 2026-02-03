@@ -23,16 +23,16 @@ type CLI struct {
 	VersionCmd VersionCmd       `cmd:"" name:"version" help:"Print version"`
 	Config     ConfigCmd        `cmd:"" help:"Manage configuration"`
 	Auth       AuthCmd          `cmd:"" help:"Authentication and credentials"`
-	Conv       ConvCmd          `cmd:"" help:"Conversations"`
-	Msg        MsgCmd           `cmd:"" help:"Messages"`
-	Draft      DraftCmd         `cmd:"" help:"Drafts"`
-	Tag        TagCmd           `cmd:"" help:"Tags"`
-	Inbox      InboxCmd         `cmd:"" help:"Inboxes"`
-	Teammate   TeammateCmd      `cmd:"" help:"Teammates"`
-	Contact    ContactCmd       `cmd:"" help:"Contacts"`
-	Channel    ChannelCmd       `cmd:"" help:"Channels"`
-	Comment    CommentCmd       `cmd:"" help:"Comments (internal discussions)"`
-	Template   TemplateCmd      `cmd:"" help:"Templates (canned responses)"`
+	Conv       ConvCmd          `cmd:"" name:"conversations" aliases:"conv" help:"Conversations"`
+	Msg        MsgCmd           `cmd:"" name:"messages" aliases:"msg" help:"Messages"`
+	Draft      DraftCmd         `cmd:"" name:"drafts" help:"Drafts"`
+	Tag        TagCmd           `cmd:"" name:"tags" help:"Tags"`
+	Inbox      InboxCmd         `cmd:"" name:"inboxes" help:"Inboxes"`
+	Teammate   TeammateCmd      `cmd:"" name:"teammates" help:"Teammates"`
+	Contact    ContactCmd       `cmd:"" name:"contacts" help:"Contacts"`
+	Channel    ChannelCmd       `cmd:"" name:"channels" help:"Channels"`
+	Comment    CommentCmd       `cmd:"" name:"comments" help:"Comments (internal discussions)"`
+	Template   TemplateCmd      `cmd:"" name:"templates" help:"Templates (canned responses)"`
 	Completion CompletionCmd    `cmd:"" help:"Generate shell completions"`
 	Whoami     WhoamiCmd        `cmd:"" help:"Show authenticated user info"`
 }
@@ -62,6 +62,11 @@ func Execute(args []string) (err error) {
 			panic(r)
 		}
 	}()
+
+	// Show help when no command provided
+	if len(args) == 0 {
+		args = []string{"--help"}
+	}
 
 	kctx, err := parser.Parse(args)
 	if err != nil {

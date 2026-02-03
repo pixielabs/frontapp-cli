@@ -16,7 +16,7 @@ type CompletionBashCmd struct{}
 func (c *CompletionBashCmd) Run() error {
 	script := `_frontcli_completions() {
     local cur="${COMP_WORDS[COMP_CWORD]}"
-    local commands="version config auth conv msg draft tag inbox teammate contact channel comment template completion whoami"
+    local commands="version config auth conversations messages drafts tags inboxes teammates contacts channels comments templates completion whoami"
 
     if [ $COMP_CWORD -eq 1 ]; then
         COMPREPLY=($(compgen -W "$commands" -- "$cur"))
@@ -41,16 +41,16 @@ _frontcli() {
         'version:Print version'
         'config:Manage configuration'
         'auth:Authentication and credentials'
-        'conv:Conversations'
-        'msg:Messages'
-        'draft:Drafts'
-        'tag:Tags'
-        'inbox:Inboxes'
-        'teammate:Teammates'
-        'contact:Contacts'
-        'channel:Channels'
-        'comment:Comments'
-        'template:Templates'
+        'conversations:Conversations'
+        'messages:Messages'
+        'drafts:Drafts'
+        'tags:Tags'
+        'inboxes:Inboxes'
+        'teammates:Teammates'
+        'contacts:Contacts'
+        'channels:Channels'
+        'comments:Comments'
+        'templates:Templates'
         'completion:Generate shell completions'
         'whoami:Show authenticated user info'
     )
@@ -81,16 +81,16 @@ func (c *CompletionFishCmd) Run() error {
 complete -c frontcli -n '__fish_use_subcommand' -a 'version' -d 'Print version'
 complete -c frontcli -n '__fish_use_subcommand' -a 'config' -d 'Manage configuration'
 complete -c frontcli -n '__fish_use_subcommand' -a 'auth' -d 'Authentication and credentials'
-complete -c frontcli -n '__fish_use_subcommand' -a 'conv' -d 'Conversations'
-complete -c frontcli -n '__fish_use_subcommand' -a 'msg' -d 'Messages'
-complete -c frontcli -n '__fish_use_subcommand' -a 'draft' -d 'Drafts'
-complete -c frontcli -n '__fish_use_subcommand' -a 'tag' -d 'Tags'
-complete -c frontcli -n '__fish_use_subcommand' -a 'inbox' -d 'Inboxes'
-complete -c frontcli -n '__fish_use_subcommand' -a 'teammate' -d 'Teammates'
-complete -c frontcli -n '__fish_use_subcommand' -a 'contact' -d 'Contacts'
-complete -c frontcli -n '__fish_use_subcommand' -a 'channel' -d 'Channels'
-complete -c frontcli -n '__fish_use_subcommand' -a 'comment' -d 'Comments'
-complete -c frontcli -n '__fish_use_subcommand' -a 'template' -d 'Templates'
+complete -c frontcli -n '__fish_use_subcommand' -a 'conversations' -d 'Conversations'
+complete -c frontcli -n '__fish_use_subcommand' -a 'messages' -d 'Messages'
+complete -c frontcli -n '__fish_use_subcommand' -a 'drafts' -d 'Drafts'
+complete -c frontcli -n '__fish_use_subcommand' -a 'tags' -d 'Tags'
+complete -c frontcli -n '__fish_use_subcommand' -a 'inboxes' -d 'Inboxes'
+complete -c frontcli -n '__fish_use_subcommand' -a 'teammates' -d 'Teammates'
+complete -c frontcli -n '__fish_use_subcommand' -a 'contacts' -d 'Contacts'
+complete -c frontcli -n '__fish_use_subcommand' -a 'channels' -d 'Channels'
+complete -c frontcli -n '__fish_use_subcommand' -a 'comments' -d 'Comments'
+complete -c frontcli -n '__fish_use_subcommand' -a 'templates' -d 'Templates'
 complete -c frontcli -n '__fish_use_subcommand' -a 'completion' -d 'Generate shell completions'
 complete -c frontcli -n '__fish_use_subcommand' -a 'whoami' -d 'Show authenticated user info'
 `

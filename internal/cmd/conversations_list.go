@@ -6,9 +6,13 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"sync"
+
+	"golang.org/x/sync/errgroup"
 
 	"github.com/dedene/frontapp-cli/internal/api"
 	"github.com/dedene/frontapp-cli/internal/errfmt"
+	"github.com/dedene/frontapp-cli/internal/markdown"
 	"github.com/dedene/frontapp-cli/internal/output"
 )
 
@@ -67,6 +71,9 @@ func (c *ConvListCmd) Run(flags *RootFlags) error {
 type ConvGetCmd struct {
 	ID       string `arg:"" help:"Conversation ID"`
 	Messages bool   `help:"Include messages" short:"m"`
+	Full     bool   `help:"Include full message content (implies -m)"`
+	HTML     bool   `help:"Show message body as HTML (with --full)"`
+	Text     bool   `help:"Show message body as plain text (with --full)"`
 }
 
 func (c *ConvGetCmd) Run(flags *RootFlags) error {
@@ -89,16 +96,19 @@ func (c *ConvGetCmd) Run(flags *RootFlags) error {
 		return err
 	}
 
+	// --full implies -m
+	showMessages := c.Messages || c.Full
+
 	if mode.JSON {
 		result := map[string]any{"conversation": conv}
 
-		if c.Messages {
-			msgs, err := client.ListConversationMessages(ctx, c.ID, 50)
+		if showMessages {
+			msgs, err := c.fetchMessages(ctx, client)
 			if err != nil {
 				return err
 			}
 
-			result["messages"] = msgs.Results
+			result["messages"] = msgs
 		}
 
 		return output.WriteJSON(os.Stdout, result)
@@ -123,6 +133,10 @@ func (c *ConvGetCmd) Run(flags *RootFlags) error {
 
 	fmt.Fprintf(os.Stdout, "Created:  %s\n", output.FormatTimestamp(conv.CreatedAt))
 
+	if c.Full {
+		return c.printFullMessages(ctx, client)
+	}
+
 	if c.Messages {
 		msgs, err := client.ListConversationMessages(ctx, c.ID, 50)
 		if err != nil {
@@ -142,6 +156,133 @@ func (c *ConvGetCmd) Run(flags *RootFlags) error {
 	}
 
 	return nil
+}
+
+func (c *ConvGetCmd) fetchMessages(ctx context.Context, client *api.Client) ([]api.Message, error) {
+	if !c.Full {
+		// Just list messages (blurbs only)
+		resp, err := client.ListConversationMessages(ctx, c.ID, 50)
+		if err != nil {
+			return nil, err
+		}
+
+		return resp.Results, nil
+	}
+
+	// Fetch full message content
+	return c.fetchFullMessages(ctx, client)
+}
+
+func (c *ConvGetCmd) fetchFullMessages(ctx context.Context, client *api.Client) ([]api.Message, error) {
+	// First get message IDs
+	resp, err := client.ListConversationMessages(ctx, c.ID, 50)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(resp.Results) == 0 {
+		return nil, nil
+	}
+
+	// Fetch full content in parallel
+	messages := make([]api.Message, len(resp.Results))
+	var mu sync.Mutex
+
+	g, ctx := errgroup.WithContext(ctx)
+	g.SetLimit(5) // Max 5 concurrent requests
+
+	for i, msg := range resp.Results {
+		g.Go(func() error {
+			fullMsg, err := client.GetMessage(ctx, msg.ID)
+			if err != nil {
+				return err
+			}
+
+			mu.Lock()
+			messages[i] = *fullMsg
+			mu.Unlock()
+
+			return nil
+		})
+	}
+
+	if err := g.Wait(); err != nil {
+		return nil, err
+	}
+
+	return messages, nil
+}
+
+func (c *ConvGetCmd) printFullMessages(ctx context.Context, client *api.Client) error {
+	messages, err := c.fetchFullMessages(ctx, client)
+	if err != nil {
+		return err
+	}
+
+	if len(messages) == 0 {
+		fmt.Fprintln(os.Stdout, "\nNo messages.")
+
+		return nil
+	}
+
+	fmt.Fprintln(os.Stdout, "\n"+strings.Repeat("─", 60))
+
+	// Print in chronological order (API returns newest first)
+	for i := len(messages) - 1; i >= 0; i-- {
+		msg := messages[i]
+		c.printMessage(msg)
+
+		if i > 0 {
+			fmt.Fprintln(os.Stdout, strings.Repeat("─", 60))
+		}
+	}
+
+	return nil
+}
+
+func (c *ConvGetCmd) printMessage(msg api.Message) {
+	// Direction
+	dir := "→"
+	if msg.IsInbound {
+		dir = "←"
+	}
+
+	// From
+	from := "-"
+	if msg.Author != nil {
+		from = msg.Author.Email
+		if from == "" {
+			from = msg.Author.Username
+		}
+	}
+
+	// Header with message ID
+	fmt.Fprintf(os.Stdout, "%s %s  %s  [%s]\n", dir, from, output.FormatTimestamp(msg.CreatedAt), msg.ID)
+	fmt.Fprintln(os.Stdout)
+
+	// Body
+	body := c.formatMessageBody(msg)
+	fmt.Fprintln(os.Stdout, body)
+	fmt.Fprintln(os.Stdout)
+}
+
+func (c *ConvGetCmd) formatMessageBody(msg api.Message) string {
+	if c.HTML {
+		return msg.Body
+	}
+
+	if c.Text {
+		return msg.Text
+	}
+
+	// Default: markdown
+	md, err := markdown.ToMarkdown(msg.Body)
+	if err != nil {
+		// Fallback to plain text on error
+		return msg.Text
+	}
+
+	return strings.TrimSpace(md)
 }
 
 type ConvSearchCmd struct {

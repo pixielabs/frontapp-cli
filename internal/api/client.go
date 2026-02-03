@@ -459,6 +459,27 @@ func (c *Client) ListContacts(ctx context.Context, limit int) (*ListResponse[Con
 	return &resp, nil
 }
 
+// ListContactsPage fetches a page of contacts using a page token.
+func (c *Client) ListContactsPage(ctx context.Context, pageURL string) (*ListResponse[Contact], error) {
+	// pageURL is a full URL; extract path+query
+	parsed, err := url.Parse(pageURL)
+	if err != nil {
+		return nil, fmt.Errorf("parse page URL: %w", err)
+	}
+
+	path := parsed.Path
+	if parsed.RawQuery != "" {
+		path += "?" + parsed.RawQuery
+	}
+
+	var resp ListResponse[Contact]
+	if err := c.Get(ctx, path, &resp); err != nil {
+		return nil, err
+	}
+
+	return &resp, nil
+}
+
 // GetContact gets a single contact by ID.
 func (c *Client) GetContact(ctx context.Context, id string) (*Contact, error) {
 	var contact Contact

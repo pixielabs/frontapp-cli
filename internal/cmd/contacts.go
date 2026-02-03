@@ -71,8 +71,9 @@ func (c *ContactListCmd) Run(flags *RootFlags) error {
 }
 
 type ContactSearchCmd struct {
-	Query string `arg:"" help:"Search query (matches name or handle)"`
-	Limit int    `help:"Maximum results" default:"25"`
+	Query    string `arg:"" help:"Search query (matches name or handle)"`
+	Limit    int    `help:"Maximum results" default:"25"`
+	MaxPages int    `help:"Maximum pages to search (100 contacts/page)" default:"25"`
 }
 
 func (c *ContactSearchCmd) Run(flags *RootFlags) error {
@@ -88,26 +89,38 @@ func (c *ContactSearchCmd) Run(flags *RootFlags) error {
 		return err
 	}
 
-	// Front API doesn't have a contact search endpoint, so we fetch contacts
-	// and filter client-side. Fetch more to improve search coverage.
-	resp, err := client.ListContacts(ctx, 100)
-	if err != nil {
-		fmt.Fprint(os.Stderr, errfmt.Format(err))
-
-		return err
-	}
-
-	// Filter contacts matching query (case-insensitive)
+	// Front API doesn't have a contact search endpoint, so we paginate
+	// through contacts and filter client-side until we have enough matches.
 	query := strings.ToLower(c.Query)
 	var matches []api.Contact
 
-	for _, contact := range resp.Results {
-		if contactMatches(contact, query) {
-			matches = append(matches, contact)
+	// First page: fetch max 100 contacts
+	resp, err := client.ListContacts(ctx, 100)
+	if err != nil {
+		fmt.Fprint(os.Stderr, errfmt.Format(err))
+		return err
+	}
 
-			if len(matches) >= c.Limit {
-				break
+	for page := 1; page <= c.MaxPages; page++ {
+		for _, contact := range resp.Results {
+			if contactMatches(contact, query) {
+				matches = append(matches, contact)
+				if len(matches) >= c.Limit {
+					break
+				}
 			}
+		}
+
+		// Stop if we have enough matches or no more pages
+		if len(matches) >= c.Limit || resp.Pagination.Next == "" {
+			break
+		}
+
+		// Fetch next page
+		resp, err = client.ListContactsPage(ctx, resp.Pagination.Next)
+		if err != nil {
+			fmt.Fprint(os.Stderr, errfmt.Format(err))
+			return err
 		}
 	}
 
@@ -117,7 +130,6 @@ func (c *ContactSearchCmd) Run(flags *RootFlags) error {
 
 	if len(matches) == 0 {
 		fmt.Fprintln(os.Stdout, "No contacts found.")
-
 		return nil
 	}
 

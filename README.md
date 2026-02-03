@@ -1,4 +1,4 @@
-# frontcli — Front in your terminal
+# 📭 frontcli — Front in your terminal
 
 Fast, script-friendly CLI for [Front](https://frontapp.com). Manage conversations, messages,
 contacts, tags, and more from the command line. JSON output, multiple accounts, and secure
@@ -6,7 +6,8 @@ credential storage built in.
 
 ## Features
 
-- **Conversations** - list/search/get, messages/comments, archive/open/trash, assign/unassign, snooze, follow, custom fields
+- **Conversations** - list/search/get, messages/comments, archive/open/trash, assign/unassign,
+  snooze, follow, custom fields
 - **Messages** - get, send, reply, attachments + download
 - **Drafts** - create, list, get, update, delete
 - **Tags** - list/tree, get, create, update, delete, children, convos
@@ -24,24 +25,25 @@ credential storage built in.
 
 ## Installation
 
+### Homebrew
+
+```bash
+brew install dedene/tap/frontcli
+```
+
+### Go Install
+
+```bash
+go install github.com/dedene/frontapp-cli/cmd/frontcli@latest
+```
+
 ### Build from Source
 
 ```bash
 git clone https://github.com/dedene/frontapp-cli.git
 cd frontapp-cli
 make build
-```
-
-Run:
-
-```bash
 ./bin/frontcli --help
-```
-
-### Homebrew (coming soon)
-
-```bash
-brew install dedene/tap/frontcli
 ```
 
 ## Quick Start
@@ -77,8 +79,8 @@ The refresh token is stored securely in your system keychain.
 
 ```bash
 frontcli conv list --limit 5
-frontcli inbox list
-frontcli teammate list
+frontcli inboxes list
+frontcli teammates list
 ```
 
 ## Setting Up Your Front OAuth App
@@ -205,7 +207,10 @@ frontcli conv list --tag tag_xxx
 
 # Get conversation details
 frontcli conv get cnv_xxx
-frontcli conv get cnv_xxx --messages    # Include messages
+frontcli conv get cnv_xxx --messages              # Include message summaries
+frontcli conv get cnv_xxx --full                  # Include full message content (parallel fetch)
+frontcli conv get cnv_xxx --full --html           # Show HTML body
+frontcli conv get cnv_xxx --full --text           # Show plain text body
 frontcli conv messages cnv_xxx
 frontcli conv comments cnv_xxx
 
@@ -266,115 +271,115 @@ frontcli msg attachment download att_xxx -o ./file.pdf
 
 ```bash
 # Create draft (reply to conversation)
-frontcli draft create cnv_xxx --body "Draft reply"
+frontcli drafts create cnv_xxx --body "Draft reply"
 
 # Create draft (new message via channel)
-frontcli draft create --channel cha_xxx --to user@example.com --body "Draft message"
+frontcli drafts create --channel cha_xxx --to user@example.com --body "Draft message"
 
 # List drafts in conversation
-frontcli draft list cnv_xxx
+frontcli drafts list cnv_xxx
 
 # Get draft
-frontcli draft get dra_xxx
+frontcli drafts get dra_xxx
 
 # Update draft (optimistic locking with version)
-frontcli draft update dra_xxx --body "Updated draft" --draft-version 1
+frontcli drafts update dra_xxx --body "Updated draft" --draft-version 1
 
 # Delete draft
-frontcli draft delete dra_xxx
+frontcli drafts delete dra_xxx
 ```
 
 ### Tags
 
 ```bash
 # List all tags
-frontcli tag list
-frontcli tag list --tree
+frontcli tags list
+frontcli tags list --tree
 
 # Get tag details
-frontcli tag get tag_xxx
+frontcli tags get tag_xxx
 
 # Create tag
-frontcli tag create --name "Urgent" --color red
-frontcli tag create --name "Follow-up" --parent tag_xxx   # Child tag
+frontcli tags create --name "Urgent" --color red
+frontcli tags create --name "Follow-up" --parent tag_xxx   # Child tag
 
 # Update tag
-frontcli tag update tag_xxx --name "Very Urgent"
+frontcli tags update tag_xxx --name "Very Urgent"
 
 # Delete tag
-frontcli tag delete tag_xxx
+frontcli tags delete tag_xxx
 
 # List child tags
-frontcli tag children tag_xxx
+frontcli tags children tag_xxx
 
 # Conversations with tag
-frontcli tag convos tag_xxx
+frontcli tags convos tag_xxx
 ```
 
 ### Contacts
 
 ```bash
 # List contacts
-frontcli contact list
-frontcli contact list --limit 50
-frontcli contact search "john"
+frontcli contacts list
+frontcli contacts list --limit 50
+frontcli contacts search "john"
 
 # Get contact
-frontcli contact get ctc_xxx
-frontcli contact handles ctc_xxx
+frontcli contacts get ctc_xxx
+frontcli contacts handles ctc_xxx
 
 # Manage handles
-frontcli contact handle add ctc_xxx --type email --value new@example.com
-frontcli contact handle delete hdl_xxx
+frontcli contacts handle add ctc_xxx --type email --value new@example.com
+frontcli contacts handle delete hdl_xxx
 
 # Notes
-frontcli contact notes ctc_xxx
-frontcli contact note add ctc_xxx --body "Important customer"
+frontcli contacts notes ctc_xxx
+frontcli contacts note add ctc_xxx --body "Important customer"
 
 # Conversations for contact
-frontcli contact convos ctc_xxx
+frontcli contacts convos ctc_xxx
 
 # Create contact
-frontcli contact create --handle email:user@example.com --name "John Doe"
-frontcli contact create --handle phone:+1234567890 --name "Jane Doe"
+frontcli contacts create --handle email:user@example.com --name "John Doe"
+frontcli contacts create --handle phone:+1234567890 --name "Jane Doe"
 
 # Update contact
-frontcli contact update ctc_xxx --name "John Smith"
+frontcli contacts update ctc_xxx --name "John Smith"
 
 # Delete contact
-frontcli contact delete ctc_xxx
+frontcli contacts delete ctc_xxx
 
 # Merge contacts
-frontcli contact merge ctc_source ctc_target
+frontcli contacts merge ctc_source ctc_target
 ```
 
 ### Other Resources
 
 ```bash
 # Inboxes
-frontcli inbox list
-frontcli inbox get inb_xxx
-frontcli inbox convos inb_xxx
-frontcli inbox channels inb_xxx
+frontcli inboxes list
+frontcli inboxes get inb_xxx
+frontcli inboxes convos inb_xxx
+frontcli inboxes channels inb_xxx
 
 # Teammates
-frontcli teammate list
-frontcli teammate get tea_xxx
-frontcli teammate convos tea_xxx
+frontcli teammates list
+frontcli teammates get tea_xxx
+frontcli teammates convos tea_xxx
 
 # Channels
-frontcli channel list
-frontcli channel get cha_xxx
+frontcli channels list
+frontcli channels get cha_xxx
 
 # Comments (internal discussions)
-frontcli comment list cnv_xxx
-frontcli comment get cmt_xxx
-frontcli comment create cnv_xxx --body "Internal note"
+frontcli comments list cnv_xxx
+frontcli comments get cmt_xxx
+frontcli comments create cnv_xxx --body "Internal note"
 
 # Templates
-frontcli template list
-frontcli template get rsp_xxx
-frontcli template use rsp_xxx
+frontcli templates list
+frontcli templates get rsp_xxx
+frontcli templates use rsp_xxx
 
 # Whoami
 frontcli whoami
@@ -449,7 +454,7 @@ default_account: work@company.com
 account_aliases:
   work: work@company.com
   personal: me@gmail.com
-default_output: text   # text | json | plain
+default_output: text # text | json | plain
 timezone: UTC
 ```
 
