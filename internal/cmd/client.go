@@ -1,0 +1,27 @@
+package cmd
+
+import (
+	"github.com/dedene/frontapp-cli/internal/api"
+	"github.com/dedene/frontapp-cli/internal/config"
+)
+
+var newClientFromAuth = api.NewClientFromAuth
+
+// getClient creates an API client using stored auth credentials.
+func getClient(flags *RootFlags) (*api.Client, error) {
+	email, err := config.ResolveAccount(flags.Account)
+	if err != nil {
+		return nil, err
+	}
+
+	if email == "" {
+		email = "user@front.app" // Default placeholder
+	}
+
+	clientName, err := config.ResolveClientForAccount(email, flags.Client)
+	if err != nil {
+		return nil, err
+	}
+
+	return newClientFromAuth(clientName, email)
+}
