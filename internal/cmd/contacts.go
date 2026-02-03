@@ -3,8 +3,8 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"net/url"
 	"os"
+	"strings"
 
 	"github.com/dedene/frontapp-cli/internal/api"
 	"github.com/dedene/frontapp-cli/internal/errfmt"
@@ -71,7 +71,7 @@ func (c *ContactListCmd) Run(flags *RootFlags) error {
 }
 
 type ContactSearchCmd struct {
-	Query string `arg:"" help:"Search query"`
+	Query string `arg:"" help:"Search query (matches name or handle)"`
 	Limit int    `help:"Maximum results" default:"25"`
 }
 
@@ -88,24 +88,34 @@ func (c *ContactSearchCmd) Run(flags *RootFlags) error {
 		return err
 	}
 
-	params := url.Values{}
-	params.Set("q", c.Query)
-	if c.Limit > 0 {
-		params.Set("limit", fmt.Sprintf("%d", c.Limit))
-	}
-
-	var resp api.ListResponse[api.Contact]
-	if err := client.Get(ctx, "/contacts/search?"+params.Encode(), &resp); err != nil {
+	// Front API doesn't have a contact search endpoint, so we fetch contacts
+	// and filter client-side. Fetch more to improve search coverage.
+	resp, err := client.ListContacts(ctx, 100)
+	if err != nil {
 		fmt.Fprint(os.Stderr, errfmt.Format(err))
 
 		return err
 	}
 
-	if mode.JSON {
-		return output.WriteJSON(os.Stdout, resp)
+	// Filter contacts matching query (case-insensitive)
+	query := strings.ToLower(c.Query)
+	var matches []api.Contact
+
+	for _, contact := range resp.Results {
+		if contactMatches(contact, query) {
+			matches = append(matches, contact)
+
+			if len(matches) >= c.Limit {
+				break
+			}
+		}
 	}
 
-	if len(resp.Results) == 0 {
+	if mode.JSON {
+		return output.WriteJSON(os.Stdout, matches)
+	}
+
+	if len(matches) == 0 {
 		fmt.Fprintln(os.Stdout, "No contacts found.")
 
 		return nil
@@ -114,11 +124,25 @@ func (c *ContactSearchCmd) Run(flags *RootFlags) error {
 	tbl := output.NewTableWriter(os.Stdout, mode.Plain)
 	tbl.AddRow("ID", "NAME", "HANDLE")
 
-	for _, contact := range resp.Results {
+	for _, contact := range matches {
 		tbl.AddRow(output.FormatContact(contact)...)
 	}
 
 	return tbl.Flush()
+}
+
+func contactMatches(contact api.Contact, query string) bool {
+	if strings.Contains(strings.ToLower(contact.Name), query) {
+		return true
+	}
+
+	for _, h := range contact.Handles {
+		if strings.Contains(strings.ToLower(h.Handle), query) {
+			return true
+		}
+	}
+
+	return false
 }
 
 type ContactGetCmd struct {
