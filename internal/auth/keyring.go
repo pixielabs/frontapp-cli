@@ -7,6 +7,7 @@ import (
 	"os"
 	"runtime"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/99designs/keyring"
@@ -48,6 +49,13 @@ var (
 	errKeyringTimeout      = errors.New("keyring connection timed out")
 	openKeyringFunc        = openKeyring
 	keyringOpenFunc        = keyring.Open
+)
+
+// Singleton store to avoid multiple keychain prompts per process.
+var (
+	defaultStore     Store
+	defaultStoreOnce sync.Once
+	defaultStoreErr  error
 )
 
 const keyringOpenTimeout = 5 * time.Second
@@ -157,12 +165,23 @@ func openKeyringWithTimeout(cfg keyring.Config, timeout time.Duration) (keyring.
 }
 
 func OpenDefault() (Store, error) {
-	ring, err := openKeyringFunc()
-	if err != nil {
-		return nil, err
-	}
+	defaultStoreOnce.Do(func() {
+		ring, err := openKeyringFunc()
+		if err != nil {
+			defaultStoreErr = err
+			return
+		}
+		defaultStore = &KeyringStore{ring: ring}
+	})
 
-	return &KeyringStore{ring: ring}, nil
+	return defaultStore, defaultStoreErr
+}
+
+// ResetDefaultStore resets the singleton store for testing.
+func ResetDefaultStore() {
+	defaultStoreOnce = sync.Once{}
+	defaultStore = nil
+	defaultStoreErr = nil
 }
 
 type storedToken struct {
