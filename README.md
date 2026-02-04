@@ -1,5 +1,10 @@
 # 📭 frontcli — Front in your terminal
 
+[![CI](https://github.com/dedene/frontapp-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/dedene/frontapp-cli/actions/workflows/ci.yml)
+[![Go 1.25+](https://img.shields.io/badge/go-1.25+-00ADD8.svg)](https://go.dev/)
+[![Go Report Card](https://goreportcard.com/badge/github.com/dedene/frontapp-cli)](https://goreportcard.com/report/github.com/dedene/frontapp-cli)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
+
 Fast, script-friendly CLI for [Front](https://frontapp.com). Manage conversations, messages,
 contacts, tags, and more from the command line. JSON output, multiple accounts, and secure
 credential storage built in.
