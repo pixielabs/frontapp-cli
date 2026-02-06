@@ -520,6 +520,18 @@ make build
 - Access tokens are kept in memory only and refreshed automatically
 - Never commit credentials to version control
 
+## AI Agent Skill
+
+This repo includes an [Agent Skill](https://code.claude.com/docs/en/skills) so AI coding
+agents can use frontcli autonomously. Install it with:
+
+```bash
+npx skills add dedene/frontapp-cli
+```
+
+The skill is located at `.claude/skills/frontcli/SKILL.md` and works with Claude Code, Cursor,
+GitHub Copilot, and other compatible agents.
+
 ## Links
 
 - [Front API Documentation](https://dev.frontapp.com/reference/introduction)
