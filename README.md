@@ -5,6 +5,14 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/dedene/frontapp-cli)](https://goreportcard.com/report/github.com/dedene/frontapp-cli)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 
+## Agent Skill
+
+This CLI is available as an [open agent skill](https://skills.sh/) for AI assistants including [Claude Code](https://claude.ai/code), [OpenClaw](https://openclaw.ai/), [Codex](https://github.com/openai/codex), Cursor, GitHub Copilot, and [35+ agents](https://github.com/vercel-labs/skills#supported-agents).
+
+```bash
+npx skills add dedene/frontapp-cli
+```
+
 Fast, script-friendly CLI for [Front](https://frontapp.com). Manage conversations, messages,
 contacts, tags, and more from the command line. JSON output, multiple accounts, and secure
 credential storage built in.
@@ -519,14 +527,6 @@ make build
 - Refresh tokens are stored in your system's secure keyring
 - Access tokens are kept in memory only and refreshed automatically
 - Never commit credentials to version control
-
-## Agent Skill
-
-This CLI is available as an [open agent skill](https://skills.sh/) for AI assistants including [Claude Code](https://claude.ai/code), [OpenClaw](https://openclaw.ai/), Cursor, and GitHub Copilot:
-
-```bash
-npx skills add dedene/frontapp-cli
-```
 
 ## Links
 
