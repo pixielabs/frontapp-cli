@@ -237,3 +237,10 @@ frontcli conv search --status open --unassigned --json | jq -r '._results[].id' 
 - `contacts merge` is irreversible -- always confirm before executing.
 - Rate limits are handled automatically with exponential backoff.
 - When an error mentions wrong ID prefix, check the ID Reference table.
+
+
+## Installation
+
+```bash
+brew install dedene/tap/frontcli
+```
