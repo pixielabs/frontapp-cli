@@ -1,6 +1,27 @@
 ---
 name: frontcli
 description: Interact with Front customer support platform via the frontcli CLI. Use when managing conversations, messages, contacts, tags, drafts, comments, templates, inboxes, teammates, or channels in Front. Triggered by mentions of Front, frontcli, support tickets, customer conversations, or helpdesk operations.
+license: MIT
+homepage: https://github.com/dedene/frontapp-cli
+metadata:
+  author: dedene
+  version: "1.1.0"
+  openclaw:
+    primaryEnv: FRONT_ACCOUNT
+    requires:
+      env:
+        - FRONT_ACCOUNT
+        - FRONT_KEYRING_BACKEND
+      bins:
+        - frontcli
+    install:
+      - kind: brew
+        tap: dedene/tap
+        formula: frontcli
+        bins: [frontcli]
+      - kind: go
+        package: github.com/dedene/frontapp-cli/cmd/frontcli
+        bins: [frontcli]
 ---
 
 # frontcli -- Front CLI
