@@ -5,6 +5,44 @@ import (
 	"testing"
 )
 
+func TestSanitizeID(t *testing.T) {
+	tests := []struct {
+		name    string
+		id      string
+		want    string
+		wantErr bool
+	}{
+		{"valid conversation ID", "cnv_abc123", "cnv_abc123", false},
+		{"valid message ID", "msg_xyz789", "msg_xyz789", false},
+		{"trims whitespace", "  cnv_abc123  ", "cnv_abc123", false},
+		{"empty string", "", "", true},
+		{"whitespace only", "   ", "", true},
+		{"path traversal slash", "cnv_abc/../../admin", "", true},
+		{"path traversal backslash", "cnv_abc\\..\\admin", "", true},
+		{"dot-dot traversal", "cnv_abc..def", "", true},
+		{"just dots", "..", "", true},
+		{"embedded newline", "cnv_abc\ndef", "", true},
+		{"embedded tab", "cnv_abc\tdef", "", true},
+		{"embedded null", "cnv_abc\x00def", "", true},
+		{"single dot is ok", "cnv_abc.def", "cnv_abc.def", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := SanitizeID(tt.id)
+
+			if (err != nil) != tt.wantErr {
+				t.Errorf("SanitizeID(%q) error = %v, wantErr %v", tt.id, err, tt.wantErr)
+				return
+			}
+
+			if got != tt.want {
+				t.Errorf("SanitizeID(%q) = %q, want %q", tt.id, got, tt.want)
+			}
+		})
+	}
+}
+
 func TestExtractPrefix(t *testing.T) {
 	tests := []struct {
 		name string

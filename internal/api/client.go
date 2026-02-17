@@ -23,7 +23,27 @@ const (
 	ContentType = "application/json"
 )
 
-var errWriterRequired = errors.New("writer is required")
+var (
+	errWriterRequired   = errors.New("writer is required")
+	errPathTraversal    = errors.New("path contains traversal sequence")
+	errPathInvalidChars = errors.New("path contains invalid characters")
+)
+
+// validatePath checks that an API path does not contain traversal sequences
+// or other dangerous characters. This is a defense-in-depth measure.
+func validatePath(path string) error {
+	if strings.Contains(path, "..") {
+		return errPathTraversal
+	}
+
+	for _, r := range path {
+		if r < ' ' || r == 0x7f {
+			return errPathInvalidChars
+		}
+	}
+
+	return nil
+}
 
 // enrichErrorWithContext adds resource context to API errors for better error messages.
 func enrichErrorWithContext(err error, id, expectedResource string) error {
@@ -81,6 +101,10 @@ func NewClientFromAuth(clientName, email string) (*Client, error) {
 }
 
 func (c *Client) do(ctx context.Context, method, path string, body []byte, out interface{}) error {
+	if err := validatePath(path); err != nil {
+		return fmt.Errorf("unsafe API path %q: %w", path, err)
+	}
+
 	reqURL := c.baseURL + path
 
 	for attempt := 0; attempt < 2; attempt++ {
@@ -242,6 +266,10 @@ func (c *Client) Download(ctx context.Context, path string, w io.Writer) error {
 		return errWriterRequired
 	}
 
+	if err := validatePath(path); err != nil {
+		return fmt.Errorf("unsafe API path %q: %w", path, err)
+	}
+
 	reqURL := c.baseURL + path
 
 	for attempt := 0; attempt < 2; attempt++ {
@@ -344,6 +372,11 @@ func (c *Client) ListConversations(ctx context.Context, opts ListConversationsOp
 
 // GetConversation gets a single conversation by ID.
 func (c *Client) GetConversation(ctx context.Context, id string) (*Conversation, error) {
+	id, err := SanitizeID(id)
+	if err != nil {
+		return nil, fmt.Errorf("invalid conversation ID %q: %w", id, err)
+	}
+
 	var conv Conversation
 	if err := c.Get(ctx, "/conversations/"+id, &conv); err != nil {
 		return nil, enrichErrorWithContext(err, id, "conversation")
@@ -354,6 +387,11 @@ func (c *Client) GetConversation(ctx context.Context, id string) (*Conversation,
 
 // ListConversationMessages lists messages in a conversation.
 func (c *Client) ListConversationMessages(ctx context.Context, convID string, limit int) (*ListResponse[Message], error) {
+	convID, err := SanitizeID(convID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid conversation ID %q: %w", convID, err)
+	}
+
 	path := fmt.Sprintf("/conversations/%s/messages", convID)
 	if limit > 0 {
 		path += fmt.Sprintf("?limit=%d", limit)
@@ -369,6 +407,11 @@ func (c *Client) ListConversationMessages(ctx context.Context, convID string, li
 
 // GetMessage gets a single message by ID.
 func (c *Client) GetMessage(ctx context.Context, id string) (*Message, error) {
+	id, err := SanitizeID(id)
+	if err != nil {
+		return nil, fmt.Errorf("invalid message ID %q: %w", id, err)
+	}
+
 	var msg Message
 	if err := c.Get(ctx, "/messages/"+id, &msg); err != nil {
 		return nil, enrichErrorWithContext(err, id, "message")
@@ -389,6 +432,11 @@ func (c *Client) ListInboxes(ctx context.Context) (*ListResponse[Inbox], error) 
 
 // GetInbox gets a single inbox by ID.
 func (c *Client) GetInbox(ctx context.Context, id string) (*Inbox, error) {
+	id, err := SanitizeID(id)
+	if err != nil {
+		return nil, fmt.Errorf("invalid inbox ID %q: %w", id, err)
+	}
+
 	var inbox Inbox
 	if err := c.Get(ctx, "/inboxes/"+id, &inbox); err != nil {
 		return nil, enrichErrorWithContext(err, id, "inbox")
@@ -409,6 +457,11 @@ func (c *Client) ListTags(ctx context.Context) (*ListResponse[Tag], error) {
 
 // GetTag gets a single tag by ID.
 func (c *Client) GetTag(ctx context.Context, id string) (*Tag, error) {
+	id, err := SanitizeID(id)
+	if err != nil {
+		return nil, fmt.Errorf("invalid tag ID %q: %w", id, err)
+	}
+
 	var tag Tag
 	if err := c.Get(ctx, "/tags/"+id, &tag); err != nil {
 		return nil, enrichErrorWithContext(err, id, "tag")
@@ -429,6 +482,11 @@ func (c *Client) ListTeammates(ctx context.Context) (*ListResponse[Teammate], er
 
 // GetTeammate gets a single teammate by ID.
 func (c *Client) GetTeammate(ctx context.Context, id string) (*Teammate, error) {
+	id, err := SanitizeID(id)
+	if err != nil {
+		return nil, fmt.Errorf("invalid teammate ID %q: %w", id, err)
+	}
+
 	var tm Teammate
 	if err := c.Get(ctx, "/teammates/"+id, &tm); err != nil {
 		return nil, enrichErrorWithContext(err, id, "teammate")
@@ -449,6 +507,11 @@ func (c *Client) ListChannels(ctx context.Context) (*ListResponse[Channel], erro
 
 // GetChannel gets a single channel by ID.
 func (c *Client) GetChannel(ctx context.Context, id string) (*Channel, error) {
+	id, err := SanitizeID(id)
+	if err != nil {
+		return nil, fmt.Errorf("invalid channel ID %q: %w", id, err)
+	}
+
 	var ch Channel
 	if err := c.Get(ctx, "/channels/"+id, &ch); err != nil {
 		return nil, enrichErrorWithContext(err, id, "channel")
@@ -495,6 +558,11 @@ func (c *Client) ListContactsPage(ctx context.Context, pageURL string) (*ListRes
 
 // GetContact gets a single contact by ID.
 func (c *Client) GetContact(ctx context.Context, id string) (*Contact, error) {
+	id, err := SanitizeID(id)
+	if err != nil {
+		return nil, fmt.Errorf("invalid contact ID %q: %w", id, err)
+	}
+
 	var contact Contact
 	if err := c.Get(ctx, "/contacts/"+id, &contact); err != nil {
 		return nil, enrichErrorWithContext(err, id, "contact")

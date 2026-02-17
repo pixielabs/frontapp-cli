@@ -1,6 +1,33 @@
 package api
 
-import "strings"
+import (
+	"errors"
+	"strings"
+)
+
+var errInvalidID = errors.New("invalid resource ID")
+
+// SanitizeID validates that an ID is safe to embed in a URL path.
+// It rejects IDs containing path traversal characters or whitespace.
+func SanitizeID(id string) (string, error) {
+	id = strings.TrimSpace(id)
+	if id == "" {
+		return "", errInvalidID
+	}
+
+	for _, r := range id {
+		switch {
+		case r == '/' || r == '\\':
+			return "", errInvalidID
+		case r == '.' && strings.Contains(id, ".."):
+			return "", errInvalidID
+		case r <= ' ' || r == 0x7f:
+			return "", errInvalidID
+		}
+	}
+
+	return id, nil
+}
 
 // ResourcePrefixes maps ID prefixes to human-readable resource names.
 // Front API IDs follow the pattern: prefix_base36id (e.g., cnv_abc123).
