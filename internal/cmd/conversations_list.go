@@ -466,14 +466,17 @@ func (c *ConvSearchCmd) Run(flags *RootFlags) error {
 		return err
 	}
 
-	params := url.Values{}
-	params.Set("q", query)
+	// The query is a path parameter, not a query param
+	encodedQuery := url.PathEscape(query)
+	path := "/conversations/search/" + encodedQuery
+
+	// Add limit as a query parameter
 	if c.Limit > 0 {
-		params.Set("limit", fmt.Sprintf("%d", c.Limit))
+		path += fmt.Sprintf("?limit=%d", c.Limit)
 	}
 
 	var resp api.ListResponse[api.Conversation]
-	if err := client.Get(ctx, "/conversations/search?"+params.Encode(), &resp); err != nil {
+	if err := client.Get(ctx, path, &resp); err != nil {
 		fmt.Fprint(os.Stderr, errfmt.Format(err))
 
 		return err
