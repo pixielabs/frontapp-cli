@@ -12,6 +12,11 @@ import (
 	"github.com/dedene/frontapp-cli/internal/output"
 )
 
+// maxBulkIDs is the maximum number of IDs that can be processed in a single
+// bulk operation. This limits the blast radius of accidental or
+// prompt-injection-driven mass operations.
+const maxBulkIDs = 50
+
 type ConvArchiveCmd struct {
 	IDs     []string `arg:"" help:"Conversation IDs to archive"`
 	IDsFrom string   `help:"Read conversation IDs from stdin (use '-' for stdin)"`
@@ -444,6 +449,22 @@ func collectIDs(ids []string, idsFrom string) ([]string, error) {
 	out := make([]string, 0, len(ids)+len(fromIDs))
 	out = append(out, ids...)
 	out = append(out, fromIDs...)
+
+	for i, id := range out {
+		sanitized, err := api.SanitizeID(id)
+		if err != nil {
+			return nil, fmt.Errorf("invalid ID %q: %w", id, err)
+		}
+
+		out[i] = sanitized
+	}
+
+	if len(out) > maxBulkIDs {
+		return nil, fmt.Errorf(
+			"too many IDs (%d); maximum is %d per operation",
+			len(out), maxBulkIDs,
+		)
+	}
 
 	return out, nil
 }
