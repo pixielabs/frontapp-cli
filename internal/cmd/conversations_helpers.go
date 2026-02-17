@@ -63,6 +63,9 @@ func buildConvSearchQuery(c *ConvSearchCmd) (string, error) {
 	return strings.Join(parts, " "), nil
 }
 
+// maxStdinBytes limits stdin reads to 1 MiB to prevent unbounded memory use.
+const maxStdinBytes = 1 << 20
+
 func readIDsFromInput(source string) ([]string, error) {
 	if strings.TrimSpace(source) == "" {
 		return nil, nil
@@ -72,7 +75,7 @@ func readIDsFromInput(source string) ([]string, error) {
 		return nil, fmt.Errorf("unsupported ids-from: %s", source)
 	}
 
-	data, err := io.ReadAll(os.Stdin)
+	data, err := io.ReadAll(io.LimitReader(os.Stdin, maxStdinBytes))
 	if err != nil {
 		return nil, fmt.Errorf("read ids from stdin: %w", err)
 	}
